@@ -475,7 +475,7 @@ void CustomWindow::show_settings(Gtk::Window& parent_window) {
     auto* path_label = Gtk::make_managed<Gtk::Label>("Choose a file");
     path_label->set_halign(Gtk::Align::START);
 
-    const std::string default_path = "/forx/signature.txt";
+    std::string default_path = "/forx/signature.txt";
 
     auto* file_entry = Gtk::make_managed<Gtk::Entry>();
     file_entry->set_hexpand(true);
