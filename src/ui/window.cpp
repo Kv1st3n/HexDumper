@@ -92,7 +92,8 @@ protected:
             std::string out = capture([&](FILE *f) {
                 BinaryFileHandle *bfh = bfile_open(m_loaded_file.c_str());
                 if (!bfh) { 
-                    fprintf(f, "error: cannot open file\n"); return; 
+                    fprintf(f, "error: cannot open file\n"); 
+                    return; 
                 }
                 dump_hex(bfile_raw(bfh), f, 0, 0, 0);
                 bfile_close(bfh);
@@ -104,7 +105,8 @@ protected:
             std::string out = capture([&](FILE *f) {
                 BinaryFileHandle *bfh = bfile_open(m_loaded_file.c_str());
                 if (!bfh) { 
-                    fprintf(f, "error: cannot open file\n"); return; 
+                    fprintf(f, "error: cannot open file\n"); 
+                    return; 
                 }
                 reverse_dump(bfile_raw(bfh), f);
                 bfile_close(bfh);
@@ -116,7 +118,8 @@ protected:
             std::string out = capture([&](FILE *f) {
                 BinaryFileHandle *bfh = bfile_open(m_loaded_file.c_str());
                 if (!bfh) { 
-                    fprintf(f, "error: cannot open file\n"); return; 
+                    fprintf(f, "error: cannot open file\n"); 
+                    return; 
                 }
                 extract_strings(bfile_raw(bfh), f);
                 bfile_close(bfh);
@@ -128,7 +131,8 @@ protected:
             std::string out = capture([&](FILE *f) {
                 BinaryFileHandle *bfh = bfile_open(m_loaded_file.c_str());
                 if (!bfh) { 
-                    fprintf(f, "error: cannot open file\n"); return; 
+                    fprintf(f, "error: cannot open file\n"); 
+                    return; 
                 }
                 uint8_t buf[16];
                 size_t  n = fread(buf, 1, 16, bfile_raw(bfh));
@@ -142,7 +146,8 @@ protected:
             std::string out = capture([&](FILE *f) {
                 BinaryFileHandle *bfh = bfile_open(m_loaded_file.c_str());
                 if (!bfh) { 
-                    fprintf(f, "error: cannot open file\n"); return; 
+                    fprintf(f, "error: cannot open file\n"); 
+                    return; 
                 }
                 dump_hex(bfile_raw(bfh), f, 0, 1, 0);   // compact = 1
                 bfile_close(bfh);
@@ -154,7 +159,8 @@ protected:
             std::string out = capture([&](FILE *f) {
                 BinaryFileHandle *bfh = bfile_open(m_loaded_file.c_str());
                 if (!bfh) { 
-                    fprintf(f, "error: cannot open file\n"); return; 
+                    fprintf(f, "error: cannot open file\n"); 
+                    return; 
                 }
                 dump_hex(bfile_raw(bfh), f, 1, 0, 0);   // lowercase = 1
                 bfile_close(bfh);
