@@ -14,9 +14,6 @@ void ExportFiletype::dispatch(const std::string &path, const std::string &format
     else if (format == "pdf") {
         export_as_pdf(path);
     }
-    else if (format == "png") {
-        export_as_png(path);
-    }
     else if (format == "csv") {
         export_as_csv(path);
     }
