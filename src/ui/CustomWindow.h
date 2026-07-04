@@ -47,6 +47,8 @@ private:
 
     std::function<void(const std::string &)> m_on_file_selected;
     std::string m_export_content;
+
+    std::string m_sigdb_path = "signature.txt";
 };
 
 

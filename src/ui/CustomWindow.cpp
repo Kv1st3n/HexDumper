@@ -5,6 +5,10 @@
 #include <fstream>
 #include <sstream>
 
+extern "C" {
+    #include "sigdb.h"
+}
+
 CustomWindow::CustomWindow() {}
 
 void CustomWindow::show_picker(Gtk::Window& parent_window, const std::string& default_path, std::function<void(const std::string &)> on_file_selected) {
@@ -475,12 +479,10 @@ void CustomWindow::show_settings(Gtk::Window& parent_window) {
     auto* path_label = Gtk::make_managed<Gtk::Label>("Choose a file");
     path_label->set_halign(Gtk::Align::START);
 
-    std::string default_path = "/forx/signature.txt";
-
     auto* file_entry = Gtk::make_managed<Gtk::Entry>();
     file_entry->set_hexpand(true);
     file_entry->set_editable(false);
-    file_entry->set_text(default_path);
+    file_entry->set_text(m_sigdb_path);
 
     auto* browse_button = Gtk::make_managed<Gtk::Button>("Browse...");
 
@@ -489,27 +491,26 @@ void CustomWindow::show_settings(Gtk::Window& parent_window) {
     grid_window->attach(*browse_button, 2, 1, 1, 1);
 
     // todo, make sigdb.txt default
-    browse_button->signal_clicked().connect([this, settings_window, file_entry, default_path]() {
-        show_picker(*settings_window, default_path, [file_entry](const std::string& path) {
-            file_entry->set_text(path); 
-            std::cout << "Filepath " << path << std::endl;
+    browse_button->signal_clicked().connect([this, settings_window, file_entry]() {
+        show_picker(*settings_window, m_sigdb_path, [this, file_entry](const std::string &path) {
+            m_sigdb_path = path; 
+            file_entry->set_text(path);
         });
     });
 
-    auto* save_path_button = Gtk::make_managed<Gtk::Button>("Save");
-    save_path_button->set_halign(Gtk::Align::FILL);
-    grid_window->attach(*save_path_button, 0, 2, 1, 1);
+    auto *save_button = Gtk::make_managed<Gtk::Button>("Save");
+    save_button->set_halign(Gtk::Align::START);
+    grid_window->attach(*save_button, 0, 2, 1, 1);
 
-    save_path_button->signal_clicked().connect([file_entry, settings_window]() {
-        std::string filename = file_entry->get_text();
-
-        if (filename.empty()) {
-            std::cerr << "Error: Please enter a filename!" << std::endl;
+    save_button->signal_clicked().connect([this, file_entry, settings_window]() {
+        std::string chosen = file_entry->get_text();
+        if (chosen.empty()) {
+            std::cerr << "Error: no path selected.\n";
             return;
         }
-
-        std::cout << "Saving configuration with filename/path: " << filename << std::endl;
-        
+        m_sigdb_path = chosen;
+        sigdb_reload(m_sigdb_path.c_str()); 
+        std::cout << "sigdb reloaded from: " << m_sigdb_path << "\n";
         settings_window->close();
     });
     
