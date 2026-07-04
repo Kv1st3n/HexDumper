@@ -14,7 +14,6 @@ public:
 protected:
     void export_as_txt(const std::string &path);
     void export_as_pdf(const std::string &path);
-    void export_as_png(const std::string &path);
     void export_as_csv(const std::string &path);
 
 private:

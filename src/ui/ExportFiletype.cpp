@@ -91,7 +91,4 @@ void ExportFiletype::export_as_pdf(const std::string &path) {
     else
         std::cout << "PDF saved: " << path << "\n";
 }
-
-void ExportFiletype::export_as_png(const std::string &path) {
-    std::cout << "PNG not yet implemented: " << path << "\n";
-}
+ 
