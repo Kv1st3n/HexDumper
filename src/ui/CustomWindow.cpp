@@ -496,6 +496,23 @@ void CustomWindow::show_settings(Gtk::Window& parent_window) {
         });
     });
 
+    auto* save_path_button = Gtk::make_managed<Gtk::Button>("Save");
+    save_path_button->set_halign(Gtk::Align::FILL);
+    grid_window->attach(*save_path_button, 0, 2, 1, 1);
+
+    save_path_button->signal_clicked().connect([file_entry, settings_window]() {
+        std::string filename = file_entry->get_text();
+
+        if (filename.empty()) {
+            std::cerr << "Error: Please enter a filename!" << std::endl;
+            return;
+        }
+
+        std::cout << "Saving configuration with filename/path: " << filename << std::endl;
+        
+        settings_window->close();
+    });
+    
     // light and dark mode here
     auto* theme_label = Gtk::make_managed<Gtk::Label>("Choose theme");
     theme_label->set_halign(Gtk::Align::START);
@@ -506,9 +523,9 @@ void CustomWindow::show_settings(Gtk::Window& parent_window) {
     auto* dark_button = Gtk::make_managed<Gtk::Button>("Dark Mode");
     dark_button->signal_clicked().connect(sigc::mem_fun(*this, &CustomWindow::dark_mode));
 
-    grid_window->attach(*theme_label,  0, 2, 3, 1);
-    grid_window->attach(*light_button, 0, 3, 1, 1);
-    grid_window->attach(*dark_button,  1, 3, 1, 1);
+    grid_window->attach(*theme_label,  0, 3, 3, 1);
+    grid_window->attach(*light_button, 0, 4, 1, 1);
+    grid_window->attach(*dark_button,  1, 4, 1, 1);
 
     master_window->append(*grid_window);
     settings_window->set_child(*master_window);
@@ -548,3 +565,4 @@ void CustomWindow::on_file_dialog_finish(const Glib::RefPtr<Gio::AsyncResult>& r
 // maybe a function (for each) that does all of the set, append, etc
 // maybe make a central function, that returns window, and in the function it does all the necessary setups like title, 
 // resizable, etc
+
