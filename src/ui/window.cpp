@@ -12,6 +12,7 @@ extern "C" {
 #include <iostream>
 #include <vector>
 #include <string>
+#include <functional>
 #include <gtkmm.h>
 #include <gtkmm/button.h>
 #include <gtkmm/cssprovider.h> 
@@ -87,147 +88,84 @@ protected:
             return;
         }
 
+        std::string out;
+        bool is_grid_layout = false;
+
         // ── hex layout modes ─────────────────────────────────────
         if (m_selected_mode == "hex_dump") {
-            std::string out = capture([&](FILE *f) {
-                BinaryFileHandle *bfh = bfile_open(m_loaded_file.c_str());
-                if (!bfh) { 
-                    fprintf(f, "error: cannot open file\n"); 
-                    return; 
-                }
-                dump_hex(bfile_raw(bfh), f, 0, 0, 0);
-                bfile_close(bfh);
+            out = execute_with_file(m_loaded_file, [](FILE* raw_file, FILE* f) {
+                dump_hex(raw_file, f, 0, 0, 0);
             });
-            m_master_view_manager->set_visible_child("hex_layout");
-            m_hex_text_view->get_buffer()->set_text(out);
-
         } else if (m_selected_mode == "reverse_mode") {
-            std::string out = capture([&](FILE *f) {
-                BinaryFileHandle *bfh = bfile_open(m_loaded_file.c_str());
-                if (!bfh) { 
-                    fprintf(f, "error: cannot open file\n"); 
-                    return; 
-                }
-                reverse_dump(bfile_raw(bfh), f);
-                bfile_close(bfh);
+            out = execute_with_file(m_loaded_file, [](FILE* raw_file, FILE* f) {
+                reverse_dump(raw_file, f);
             });
-            m_master_view_manager->set_visible_child("hex_layout");
-            m_hex_text_view->get_buffer()->set_text(out);
-
         } else if (m_selected_mode == "string_extractor") {
-            std::string out = capture([&](FILE *f) {
-                BinaryFileHandle *bfh = bfile_open(m_loaded_file.c_str());
-                if (!bfh) { 
-                    fprintf(f, "error: cannot open file\n"); 
-                    return; 
-                }
-                extract_strings(bfile_raw(bfh), f);
-                bfile_close(bfh);
+            out = execute_with_file(m_loaded_file, [](FILE* raw_file, FILE* f) {
+                extract_strings(raw_file, f);
             });
-            m_master_view_manager->set_visible_child("hex_layout");
-            m_hex_text_view->get_buffer()->set_text(out);
-
         } else if (m_selected_mode == "file_identifier") {
-            std::string out = capture([&](FILE *f) {
-                BinaryFileHandle *bfh = bfile_open(m_loaded_file.c_str());
-                if (!bfh) { 
-                    fprintf(f, "error: cannot open file\n"); 
-                    return; 
-                }
+            out = execute_with_file(m_loaded_file, [](FILE* raw_file, FILE* f) {
                 uint8_t buf[16];
-                size_t  n = fread(buf, 1, 16, bfile_raw(bfh));
+                size_t n = fread(buf, 1, 16, raw_file);
                 fprintf(f, "Type: %s\n", sigdb_identify(buf, n));
-                bfile_close(bfh);
             });
-            m_master_view_manager->set_visible_child("hex_layout");
-            m_hex_text_view->get_buffer()->set_text(out);
-
         } else if (m_selected_mode == "compact") {
-            std::string out = capture([&](FILE *f) {
-                BinaryFileHandle *bfh = bfile_open(m_loaded_file.c_str());
-                if (!bfh) { 
-                    fprintf(f, "error: cannot open file\n"); 
-                    return; 
-                }
-                dump_hex(bfile_raw(bfh), f, 0, 1, 0);   // compact = 1
-                bfile_close(bfh);
+            out = execute_with_file(m_loaded_file, [](FILE* raw_file, FILE* f) {
+                dump_hex(raw_file, f, 0, 1, 0);
             });
-            m_master_view_manager->set_visible_child("hex_layout");
-            m_hex_text_view->get_buffer()->set_text(out);
-
         } else if (m_selected_mode == "lowercase") {
-            std::string out = capture([&](FILE *f) {
-                BinaryFileHandle *bfh = bfile_open(m_loaded_file.c_str());
-                if (!bfh) { 
-                    fprintf(f, "error: cannot open file\n"); 
-                    return; 
-                }
-                dump_hex(bfile_raw(bfh), f, 1, 0, 0);   // lowercase = 1
-                bfile_close(bfh);
+            out = execute_with_file(m_loaded_file, [](FILE* raw_file, FILE* f) {
+                dump_hex(raw_file, f, 1, 0, 0);
             });
-            m_master_view_manager->set_visible_child("hex_layout");
-            m_hex_text_view->get_buffer()->set_text(out);
 
         // ── grid layout modes ────────────────────────────────────
         } else if (m_selected_mode == "md5") {
-            std::string out = capture([&](FILE *f) {
-                BinaryFileHandle *bfh = bfile_open(m_loaded_file.c_str());
-                if (!bfh) { 
-                    fprintf(f, "error: cannot open file\n"); 
-                    return; 
-                }
-                print_checksum(bfile_raw(bfh), 1, f);
-                bfile_close(bfh);
-            });
-            m_master_view_manager->set_visible_child("grid_layout");
-            set_grid_text(out);
-
+            is_grid_layout = true;
+            out = execute_with_file(m_loaded_file, [](FILE* raw_file, FILE* f) { print_checksum(raw_file, 1, f); });
         } else if (m_selected_mode == "sha1") {
-            std::string out = capture([&](FILE *f) {
-                BinaryFileHandle *bfh = bfile_open(m_loaded_file.c_str());
-                if (!bfh) { 
-                    fprintf(f, "error: cannot open file\n"); 
-                    return; 
-                }
-                print_checksum(bfile_raw(bfh), 2, f);
-                bfile_close(bfh);
-            });
-            m_master_view_manager->set_visible_child("grid_layout");
-            set_grid_text(out);
-
+            is_grid_layout = true;
+            out = execute_with_file(m_loaded_file, [](FILE* raw_file, FILE* f) { print_checksum(raw_file, 2, f); });
         } else if (m_selected_mode == "sha256") {
-            std::string out = capture([&](FILE *f) {
-                BinaryFileHandle *bfh = bfile_open(m_loaded_file.c_str());
-                if (!bfh) { 
-                    fprintf(f, "error: cannot open file\n"); 
-                    return; 
-                }
-                print_checksum(bfile_raw(bfh), 3, f);
-                bfile_close(bfh);
-            });
-            m_master_view_manager->set_visible_child("grid_layout");
-            set_grid_text(out);
-
+            is_grid_layout = true;
+            out = execute_with_file(m_loaded_file, [](FILE* raw_file, FILE* f) { print_checksum(raw_file, 3, f); });
         } else if (m_selected_mode == "sha512") {
-            std::string out = capture([&](FILE *f) {
-                BinaryFileHandle *bfh = bfile_open(m_loaded_file.c_str());
-                if (!bfh) { 
-                    fprintf(f, "error: cannot open file\n"); 
-                    return; 
-                }
-                print_checksum(bfile_raw(bfh), 4, f);
-                bfile_close(bfh);
-            });
-            m_master_view_manager->set_visible_child("grid_layout");
-            set_grid_text(out);
-
+            is_grid_layout = true;
+            out = execute_with_file(m_loaded_file, [](FILE* raw_file, FILE* f) { print_checksum(raw_file, 4, f); });
         } else if (m_selected_mode == "directory_scanner") {
-            std::string out = capture([&](FILE *f) {
+            is_grid_layout = true;
+            out = execute_with_file(m_loaded_file, [this](FILE*, FILE* f) {
                 scan_directory(m_loaded_file.c_str(), f);
             });
+        }
+
+        // ── Single UI Update logic ───────────────────────────────
+        if (is_grid_layout) {
             m_master_view_manager->set_visible_child("grid_layout");
             set_grid_text(out);
+        } else {
+            m_master_view_manager->set_visible_child("hex_layout");
+            m_hex_text_view->get_buffer()->set_text(out);
         }
+    }
+
+    std::string execute_with_file(const std::string& filepath, const std::function<void(FILE*, FILE*)>& action) {
+        return capture([&](FILE *f) {
+            if (m_selected_mode == "directory_scanner") {
+                action(nullptr, f);
+                return;
+            }
+
+            BinaryFileHandle *bfh = bfile_open(filepath.c_str());
+            if (!bfh) { 
+                fprintf(f, "error: cannot open file\n"); 
+                return; 
+            }
+            
+            action(bfile_raw(bfh), f);
+            
+            bfile_close(bfh);
+        });
     }
 
     void on_save_clicked() {
