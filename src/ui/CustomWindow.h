@@ -11,19 +11,21 @@ public:
     CustomWindow();
     ~CustomWindow() = default;
 
-    void show_picker(Gtk::Window& parent_window, const std::string& default_path, std::function<void(const std::string &)> on_file_selected);
+    void show_picker(Gtk::Window &parent_window, const std::string &default_path, std::function<void(const std::string &)> on_file_selected);
+    void show_directory_picker(Gtk::Window &parent_window, const std::string &default_path, std::function<void(const std::string &)> on_directory_selected);
     void show_mode_menu(Gtk::Button &parent_button, std::function<void(const std::string &)> on_selected);
-    void show_about(Gtk::Window& parent_window);
+    void show_about(Gtk::Window &parent_window, bool is_dark);
     Gtk::Grid* create_button_grid_for_about_section();
     void fill_buffer_about(const int& choice);
-    void show_save(Gtk::Window &parent_window, const std::string &content);
+    void show_save(Gtk::Window &parent_window, const std::string &content, bool is_dark);
+    void show_settings(Gtk::Window &parent_window, std::function<void(bool)> on_theme_changed, bool is_dark);
     void show_file_types(Gtk::Button& parent_button);
-    void show_settings(Gtk::Window& parent_window);
     void light_mode();
     void dark_mode();
 
 protected:
     void on_file_dialog_finish(const Glib::RefPtr<Gio::AsyncResult>& result, const Glib::RefPtr<Gtk::FileDialog>& dialog);
+    void on_directory_dialog_finish(const Glib::RefPtr<Gio::AsyncResult>& result, const Glib::RefPtr<Gtk::FileDialog>& dialog);
 
 
 private:
@@ -46,9 +48,12 @@ private:
     void fill_buffer();
 
     std::function<void(const std::string &)> m_on_file_selected;
+    std::function<void(const std::string &)> m_on_directory_selected;
     std::string m_export_content;
 
     std::string m_sigdb_path = "signature.txt";
+
+    std::function<void(bool)> m_on_theme_changed;
 };
 
 

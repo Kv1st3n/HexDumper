@@ -38,6 +38,7 @@ int main(int argc, char **argv) {
     int   flag_stringExtract = 0;
 
     int   checksum_flag_value = 0;
+
     // m | checksum_flag_value = 1
     int   checksum_MD5 = 0;
     // 1 | checksum_flag_value = 2
@@ -46,6 +47,10 @@ int main(int argc, char **argv) {
     int   checksum_SHA256 = 0;
     // 3 | checksum_flag_value = 4
     int   checksum_SHA512 = 0;
+    // 4 | checksum_flag_value = 5
+    int   checksum_SHA224 = 0;
+    // 5 | checksum_flag_value = 6
+    int   checksum_SHA384 = 0;
 
     const char *dir_name;
 
@@ -55,7 +60,7 @@ int main(int argc, char **argv) {
 
     sigdb_load("signature.txt");
     
-    while ((opt = getopt(argc, argv, "hio:M12d:BrCLS")) != -1) {
+    while ((opt = getopt(argc, argv, "hio:M12345d:BrCLS")) != -1) {
         switch (opt) {
             case 'h':
                 flag_hexDump = 1;
@@ -97,6 +102,13 @@ int main(int argc, char **argv) {
                 break;
             case '3':
                 checksum_SHA512 = 1;
+                break;
+            case '4':
+                checksum_SHA224 = 1;
+                break;
+            case '5':
+                checksum_SHA384 = 1;
+                break;
             default:
                 fprintf(stderr, "usage: hexDumper [-h] [-o outfile] <file>\n");
                 return EXIT_FAILURE;
@@ -129,11 +141,15 @@ int main(int argc, char **argv) {
         output = stdout;
     }
 
-    if (!flag_directoryScan && !flag_identify && !flag_hexDump && !flag_reverseHex && !checksum_MD5 
-        && !checksum_SHA1 && !checksum_SHA256 && !flag_stringExtract) {
+    // Validate that at least one action flag is set
+    if (!flag_directoryScan && !flag_identify && !flag_hexDump && !flag_reverseHex 
+        && !checksum_MD5 && !checksum_SHA1 && !checksum_SHA256 
+        && !checksum_SHA512 && !checksum_SHA224 && !checksum_SHA384 
+        && !flag_stringExtract) {
+            
             fprintf(stderr,
                 "usage: hexDumper [-h] [-i] [-B] [-r] [-C] [-L] [-S]\n"
-                "                 [-M] [-1] [-2] [-d dir] [-o outfile] <file>\n");
+                "                 [-M] [-1] [-2] [-3] [-4] [-5] [-d dir] [-o outfile] <file>\n");
 
         if (b_file) {
             bfile_close(b_file);
@@ -193,6 +209,18 @@ int main(int argc, char **argv) {
 
     if (checksum_SHA512) {
         checksum_flag_value = 4;
+        print_checksum(input, checksum_flag_value, output);
+        bfile_seek(b_file, 0);
+    }
+
+    if (checksum_SHA224) {
+        checksum_flag_value = 5;
+        print_checksum(input, checksum_flag_value, output);
+        bfile_seek(b_file, 0);
+    }
+
+    if (checksum_SHA384) {
+        checksum_flag_value = 6;
         print_checksum(input, checksum_flag_value, output);
         bfile_seek(b_file, 0);
     }

@@ -11,7 +11,7 @@ Developed on macOS using clang (clang-1700.4.4.1).
 - Xcode Command Line
 - Make
 - OpenSSL (`brew install openssl`)
-- Gtk4 & Gtkmm4 ('brew install gtk4 / gtkmm4)
+- GTK4 & gtkmm4 (`brew install gtk4 gtkmm4`)
 
 ## Installing
 
@@ -22,11 +22,12 @@ make
 ```
 
 ## Using forx
-The tool reads binary data from a file and outputs it in a formatted grid.
+forx reads binary data from a file and outputs it in a formatted grid, or exposes the same functionality through a GUI.
 
 ```zsh
 ./forx [flags] <file>
 ./forx [flags]          # reads from stdin if no file is given
+./forx --gui            # launches the graphical interface
 ```
 
 ### Flags
@@ -44,6 +45,9 @@ The tool reads binary data from a file and outputs it in a formatted grid.
 | `-M` | MD5 Checksum | Implemented | 
 | `-1` | SHA1 Checksum | Implemented | 
 | `-2` | SHA256 Checksum | Implemented | 
+| `-3` | SHA512 Checksum | Implemented |
+| `-4` | SHA224 Checksum | Implemented |
+| `-5` | SHA384 Checksum | Implemented |
 
 ### GUI
 To access the GUI version of this tool type:
@@ -51,7 +55,7 @@ To access the GUI version of this tool type:
 ./forx --gui
 ```
 
-It is still in WIP, however, the flags in CLI works in the GUI. Stuff being worked on are the settings and final CSS layout
+The GUI mirrors every CLI flag through a graphical workflow: open a file, pick a mode from the dropdown, click Run, and export the result as TXT, CSV, or PDF. It includes light/dark theming, a runtime-editable signature database path, and directory scanning support.
 
 
 ### Examples
@@ -74,6 +78,9 @@ echo "hello" | ./forx -h
 
 # If you want to get byte size for the hexdump
 ./forx -h -o dump.txt -B hexDumper.c
+
+# Compute all checksums at once
+./forx -M -1 -2 -3 -4 -5 test.txt
 
 ```
 
@@ -117,6 +124,10 @@ The output is divided into the memory offset, hex values (capitalized) and print
 /testdir/test.zip: Type: ZIP
 
 ```
+
+## Signature Database
+
+File type signatures are loaded at runtime from `signature.txt` — no recompile needed to add new types.
 
 ## Build Commands
 

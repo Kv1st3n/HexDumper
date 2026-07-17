@@ -28,9 +28,6 @@ public:
         set_title("forx");
         set_default_size(1200, 800);
 
-        // dark theme
-        //Gtk::Settings::get_default()->property_gtk_application_prefer_dark_theme() = true;
-
         setup_custom_header();
         setup_main_widget();
         
@@ -49,12 +46,34 @@ public:
     // setup button actions
 protected:
     void on_open_clicked() {
-        m_file_picker_manager.show_picker(*this, "", [this](const std::string &path) {
+        if (m_selected_mode == "directory_scanner") {
+            m_file_picker_manager.show_directory_picker(*this, "", [this](const std::string &path) {
+                m_loaded_file = path;
+                std::cout << "Directory loaded: " << path << "\n";
+                
+                m_master_view_manager->set_visible_child("grid_layout");
+                set_grid_text("Directory loaded: " + path + "\nClick 'Run' to scan.");
+            });
+        } else {
+            m_file_picker_manager.show_picker(*this, "", [this](const std::string &path) {
+                m_loaded_file = path;
+                std::cout << "File loaded: " << path << "\n";
+                m_hex_text_view->get_buffer()->set_text(
+                    "File loaded: " + path + "\nSelect a mode and click Run.");
+                m_master_view_manager->set_visible_child("hex_layout");
+            });
+        }
+    }
+
+    void on_dir_clicked() {
+        m_file_picker_manager.show_directory_picker(*this, "", [this](const std::string &path) {
             m_loaded_file = path;
-            std::cout << "File loaded: " << path << "\n";
-            m_hex_text_view->get_buffer()->set_text(
-                "File loaded: " + path + "\nSelect a mode and click Run.");
-            m_master_view_manager->set_visible_child("hex_layout");
+            std::cout << "Directory loaded: " << path << "\n";
+            
+            m_master_view_manager->set_visible_child("grid_layout");
+            set_grid_text("Directory loaded: " + path + "\nSelect 'Directory Scanner' mode and click 'Run'.");
+            
+            m_selected_mode = "directory_scanner";
         });
     }
 
@@ -71,7 +90,7 @@ protected:
                 buf->set_text("Switched to mode: " + mode + "\nClick 'Run' to analyze.");
             } 
             else if (mode == "md5" || mode == "sha1" || mode == "sha256" || 
-                    mode == "sha512" || mode == "file_identifier" || mode == "directory_scanner") {
+                    mode == "sha512" || mode == "sha224" || mode == "sha384" || mode == "file_identifier" || mode == "directory_scanner") {
                 
                 m_master_view_manager->set_visible_child("grid_layout");
                 
@@ -132,6 +151,12 @@ protected:
         } else if (m_selected_mode == "sha512") {
             is_grid_layout = true;
             out = execute_with_file(m_loaded_file, [](FILE* raw_file, FILE* f) { print_checksum(raw_file, 4, f); });
+        } else if (m_selected_mode == "sha224") {
+            is_grid_layout = true;
+            out = execute_with_file(m_loaded_file, [](FILE* raw_file, FILE* f) { print_checksum(raw_file, 5, f); });
+        } else if (m_selected_mode == "sha384") {
+            is_grid_layout = true;
+            out = execute_with_file(m_loaded_file, [](FILE* raw_file, FILE* f) { print_checksum(raw_file, 6, f); });
         } else if (m_selected_mode == "directory_scanner") {
             is_grid_layout = true;
             out = execute_with_file(m_loaded_file, [this](FILE*, FILE* f) {
@@ -170,28 +195,28 @@ protected:
 
     void on_save_clicked() {
         std::string current_output;
-
         if (m_master_view_manager->get_visible_child_name() == "hex_layout") {
             current_output = m_hex_text_view->get_buffer()->get_text();
         } else {
-            // grid layout — get the label text
             auto *child = m_scan_results_grid->get_first_child();
             if (child) {
                 auto *lbl = dynamic_cast<Gtk::Label *>(child);
-                if (lbl) current_output = lbl->get_text();
+                if (lbl) {
+                    current_output = lbl->get_text();
+                }
             }
         }
-
-        m_save_mode.show_save(*this, current_output);
+        m_save_mode.show_save(*this, current_output, m_dark_mode);
     }
 
     void on_about_clicked() {
-        m_about_mode.show_about(*this);
+        m_about_mode.show_about(*this, m_dark_mode);
     }
 
     void on_settings_clicked() {
-        std::cout << "Settings clocked" << std::endl;
-        m_settings_mode.show_settings(*this);
+        m_settings_mode.show_settings(*this, [this](bool dark) {
+            set_dark_mode(dark);
+        }, m_dark_mode);
     }
 
 private:
@@ -199,38 +224,53 @@ private:
     // sets up header
     void setup_custom_header() {
         auto *title_box = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
+        title_box->set_halign(Gtk::Align::CENTER);
+
         auto *title_lable = Gtk::make_managed<Gtk::Label>("<b>forx</b>");
-        title_lable -> set_use_markup(true);
+        title_lable->set_use_markup(true);
+        title_lable->set_halign(Gtk::Align::CENTER);
 
         auto *subtitle_label = Gtk::make_managed<Gtk::Label>("Binary analysis tool");
         subtitle_label->set_css_classes({"subtitle"});
+        subtitle_label->set_halign(Gtk::Align::CENTER);
 
-        title_box -> append(*title_lable);
-        title_box -> append(*subtitle_label);
+        title_box->append(*title_lable);
+        title_box->append(*subtitle_label);
 
         m_header_bar.set_title_widget(*title_box);
 
         setup_custom_buttons();
 
-        // iterates and packs each button
-        for (auto &btn : buttons) {
-            m_header_bar.pack_start(*btn);
-        }
+        // split buttons between left and right so title stays centered
+        m_header_bar.pack_start(m_button_open);
+        m_header_bar.pack_start(m_button_choose_directory);
+        m_header_bar.pack_start(m_button_mode);
+        m_header_bar.pack_start(m_button_run);
+
+        m_header_bar.pack_end(m_button_about);
+        m_header_bar.pack_end(m_button_settings);
+        m_header_bar.pack_end(m_button_save);
 
         m_header_bar.set_show_title_buttons(true);
-
         set_titlebar(m_header_bar);
-
     }
 
     void setup_custom_buttons() {
+        m_button_open.add_css_class("forx-button-open");
+        m_button_mode.add_css_class("forx-button-mode");
+        m_button_choose_directory.add_css_class("forx-button-dir");
+        m_button_run.add_css_class("forx-button-run");
+        m_button_save.add_css_class("forx-button-save");
+        m_button_settings.add_css_class("forx-button-settings");
+        m_button_about.add_css_class("forx-button-about");
+
         m_button_open.signal_clicked().connect(sigc::mem_fun(*this, &ForxWindow::on_open_clicked));
+        m_button_choose_directory.signal_clicked().connect(sigc::mem_fun(*this, &ForxWindow::on_dir_clicked));
         m_button_mode.signal_clicked().connect(sigc::mem_fun(*this, &ForxWindow::on_mode_clicked));
         m_button_run.signal_clicked().connect(sigc::mem_fun(*this, &ForxWindow::on_run_clicked));
         m_button_save.signal_clicked().connect(sigc::mem_fun(*this, &ForxWindow::on_save_clicked));
         m_button_settings.signal_clicked().connect(sigc::mem_fun(*this, &ForxWindow::on_settings_clicked));
         m_button_about.signal_clicked().connect(sigc::mem_fun(*this, &ForxWindow::on_about_clicked));
-
     }
 
     void setup_main_widget() {
@@ -284,6 +324,7 @@ private:
     std::string m_selected_mode = "hex_dump";
 
     Custom_Button m_button_open{"Open File"};
+    Custom_Button m_button_choose_directory{"Choose Directory"};
     Custom_Button m_button_mode{"Mode"};
     Custom_Button m_button_run{"Run"};
     Custom_Button m_button_save{"Save"};
@@ -291,7 +332,7 @@ private:
     Custom_Button m_button_about{"About"};
 
     std::vector<Custom_Button*> buttons = {
-        &m_button_open, &m_button_mode, &m_button_run, 
+        &m_button_open, &m_button_choose_directory, &m_button_mode, &m_button_run, 
         &m_button_save, &m_button_settings, &m_button_about
     };
 
@@ -319,6 +360,18 @@ private:
 
     std::string m_loaded_file;
 
+    bool m_dark_mode = false;
+
+    void set_dark_mode(bool dark) {
+        m_dark_mode = dark;
+        if (dark) {
+            add_css_class("dark");
+        }
+        else {
+            remove_css_class("dark");
+        }
+    }
+
 };
 
 class ForxApp : public Gtk::Application {
@@ -333,6 +386,8 @@ protected:
     ForxApp() : Gtk::Application("org.example.forx") {}
 
     void on_activate() override {
+
+        Gtk::Settings::get_default()->property_gtk_decoration_layout() = "close,minimize,maximize:";
 
         auto provider = Gtk::CssProvider::create();
         provider->load_from_path("style.css");
@@ -355,3 +410,4 @@ extern "C" {
         app->run(argc, argv);
     }
 }
+

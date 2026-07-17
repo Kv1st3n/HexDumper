@@ -1,60 +1,263 @@
-/* Currently being tested */
-/* Will be updated */
+/* ── variables: light mode (default) ─────────────────────── */
+window {
+    --bg-primary:      #FAFAFA;
+    --bg-secondary:    #F0F0F0;
+    --bg-tertiary:     #E8E8E8;
+    --text-primary:    #1A1A1A;
+    --text-secondary:  #888888;
+    --border-color:    #DDDDDD;
+    --accent:          #2558A3;
+    --accent-hover:    #2E6ABF;
+    --accent-active:   #1B3A6B;
+    --success:         #1E7145;
+    --success-hover:   #248A53;
+    --success-active:  #155232;
+    --danger:          #8B1A1A;
+    --code-bg:         #F0F2F5;
+    --code-text:       #1A1A2E;
+    --shadow:          rgba(0,0,0,0.08);
+}
 
-/* shared base for all buttons */
+/* ── variables: dark mode ────────────────────────────────── */
+window.dark {
+    --bg-primary:      #1C1C1E;
+    --bg-secondary:    #2C2C2E;
+    --bg-tertiary:     #3A3A3C;
+    --text-primary:    #E5E5EA;
+    --text-secondary:  #8E8E93;
+    --border-color:    #48484A;
+    --accent:          #4A8FD4;
+    --accent-hover:    #5BA0E0;
+    --accent-active:   #2D5F9E;
+    --success:         #30D158;
+    --success-hover:   #40E168;
+    --success-active:  #1FA843;
+    --danger:          #FF453A;
+    --code-bg:         #2C2C2E;
+    --code-text:       #E5E5EA;
+    --shadow:          rgba(0,0,0,0.4);
+}
+
+/* ── window base ─────────────────────────────────────────── */
+window {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+/* ── header bar ──────────────────────────────────────────── */
+headerbar {
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    padding: 4px 8px;
+    box-shadow: 0 1px 3px var(--shadow);
+    min-height: 46px;
+}
+
+headerbar label {
+    color: var(--text-primary);
+}
+
+.subtitle {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 1px;
+}
+
+/* ── generic button base (popovers, dialogs, etc) ───────── */
+button {
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 13px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    transition: all 150ms ease;
+}
+
+button:hover  { background-color: var(--bg-secondary); }
+button:active { background-color: var(--bg-primary);   }
+
+/* ── forx header buttons — shared base ──────────────────── */
 .forx-button {
     border-radius: 6px;
-    padding: 6px 14px;
+    padding: 5px 12px;
     font-weight: 600;
     font-size: 13px;
-    border: 1px solid transparent;
-    transition: all 200ms ease;
+    border: 1px solid var(--border-color);
+    transition: all 150ms ease;
 }
 
-/* open file button */
-.forx-button-open {
-    background-color: #3C3C3E;
-    color: #E5E5EA;
-    border-color: #545456;
+/* group 1 — neutral utility actions (open, dir, mode) */
+.forx-button-open,
+.forx-button-dir,
+.forx-button-mode {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
 }
 
-.forx-button-open:hover {
-    background-color: #48484A;
-    border-color: #636366;
+.forx-button-open:hover,
+.forx-button-dir:hover,
+.forx-button-mode:hover {
+    background-color: var(--bg-secondary);
 }
 
-.forx-button-open:active {
-    background-color: #2C2C2E;
+.forx-button-open:active,
+.forx-button-dir:active,
+.forx-button-mode:active {
+    background-color: var(--bg-primary);
 }
 
-/* run button */
+/* group 2 — primary action (Run) */
 .forx-button-run {
-    background-color: #2558A3;
+    background-color: var(--accent);
     color: #FFFFFF;
-    border-color: #1B3A6B;
+    border-color: var(--accent-active);
 }
 
-.forx-button-run:hover {
-    background-color: #2E6ABF;
-    border-color: #2558A3;
-}
+.forx-button-run:hover  { background-color: var(--accent-hover);  }
+.forx-button-run:active { background-color: var(--accent-active); }
 
-.forx-button-run:active {
-    background-color: #1B3A6B;
-}
-
-/* save button */
+/* group 3 — confirm action (Save) */
 .forx-button-save {
-    background-color: #1E7145;
+    background-color: var(--success);
     color: #FFFFFF;
-    border-color: #155232;
+    border-color: var(--success-active);
 }
 
-.forx-button-save:hover {
-    background-color: #248A53;
-    border-color: #1E7145;
+.forx-button-save:hover  { background-color: var(--success-hover);  }
+.forx-button-save:active { background-color: var(--success-active); }
+
+/* group 4 — muted secondary actions (Settings, About) */
+.forx-button-settings,
+.forx-button-about {
+    background-color: transparent;
+    color: var(--text-secondary);
+    border-color: transparent;
 }
 
-.forx-button-save:active {
-    background-color: #155232;
+.forx-button-settings:hover,
+.forx-button-about:hover {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
 }
+
+.forx-button-settings:active,
+.forx-button-about:active {
+    background-color: var(--bg-secondary);
+}
+
+/* ── text view — hex / string / scan output ─────────────── */
+textview {
+    font-family: "Courier New", "Courier", monospace;
+    font-size: 13px;
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    padding: 10px;
+}
+
+textview text {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+/* about window text view uses a readable sans-serif instead */
+.about-window textview {
+    font-family: "Helvetica Neue", "Arial", sans-serif;
+    font-size: 13px;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    padding: 12px;
+}
+
+/* ── labels ──────────────────────────────────────────────── */
+label {
+    color: var(--text-primary);
+}
+
+.about-subtitle {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* ── entry / text input ──────────────────────────────────── */
+entry {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    padding: 5px 8px;
+}
+
+entry:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(37, 88, 163, 0.2);
+}
+
+/* ── popovers (mode menu, file type menu) ────────────────── */
+popover {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px var(--shadow);
+}
+
+popover contents {
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 4px;
+}
+
+popover button {
+    background-color: transparent;
+    border: none;
+    border-radius: 5px;
+    color: var(--text-primary);
+    padding: 7px 14px;
+    font-size: 13px;
+}
+
+popover button:hover {
+    background-color: var(--bg-tertiary);
+}
+
+/* ── separator ───────────────────────────────────────────── */
+separator {
+    background-color: var(--border-color);
+    min-height: 1px;
+    margin: 4px 0;
+}
+
+/* ── scrolled window ─────────────────────────────────────── */
+scrolledwindow {
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--bg-primary);
+}
+
+/* ── grid ────────────────────────────────────────────────── */
+grid {
+    background-color: var(--bg-primary);
+}
+
+/* ── secondary windows (about / save / settings) ─────────── */
+.about-window,
+.save-window,
+.settings-window {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+/* ── switch (dark mode toggle if used) ──────────────────── */
+switch {
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+}
+
+switch:checked {
+    background-color: var(--accent);
+    border-color: var(--accent-active);
+}
+

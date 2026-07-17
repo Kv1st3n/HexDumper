@@ -33,6 +33,22 @@ void CustomWindow::show_picker(Gtk::Window& parent_window, const std::string& de
     dialog->open(parent_window, sigc::bind(sigc::mem_fun(*this, &CustomWindow::on_file_dialog_finish), dialog));
 }
 
+void CustomWindow::show_directory_picker(Gtk::Window& parent_window, const std::string& default_path, std::function<void(const std::string &)> on_directory_selected) {
+    std::cout << "CustomWindow class: Launching directory selection..." << std::endl;
+
+    m_on_directory_selected = on_directory_selected;
+    
+    auto dialog = Gtk::FileDialog::create();
+    dialog->set_title("Select Folder to Scan");
+
+    if (!default_path.empty()) {
+        auto folder = Gio::File::create_for_path(default_path);
+        dialog->set_initial_folder(folder);
+    }
+
+    dialog->select_folder(parent_window, sigc::bind(sigc::mem_fun(*this, &CustomWindow::on_directory_dialog_finish), dialog));
+}
+
 // shows all the different modes available
 void CustomWindow::show_mode_menu(Gtk::Button &parent_button, std::function<void(const std::string &)> on_selected) {
     // always rebuild — ensures callback is never stale
@@ -52,6 +68,8 @@ void CustomWindow::show_mode_menu(Gtk::Button &parent_button, std::function<void
         { "sha1",              "SHA1"              },
         { "sha256",            "SHA256"            },
         { "sha512",            "SHA512"            },
+        { "sha224",            "SHA224"            },
+        { "sha384",            "SHA384"            },
     };
 
     for (const auto &[id, label] : modes) {
@@ -88,7 +106,7 @@ void CustomWindow::show_mode_menu(Gtk::Button &parent_button, std::function<void
 }
 
 // shows the about the tool
-void CustomWindow::show_about(Gtk::Window& parent_window) {
+void CustomWindow::show_about(Gtk::Window& parent_window, bool is_dark) {
     std::cout << "CustomWindow class: Launching About" << std::endl;
 
     auto* about_window = Gtk::make_managed<Gtk::Window>();
@@ -97,6 +115,10 @@ void CustomWindow::show_about(Gtk::Window& parent_window) {
     about_window->set_resizable(false);
     about_window->set_transient_for(parent_window);
     about_window->set_modal(true);
+    about_window->add_css_class("about-window");
+    if (is_dark) {
+        about_window->add_css_class("dark");
+    }
 
     // always create a 'master'-box, which then contains all the customizable features
     // due to gtk and its architecture, it is the only way
@@ -274,7 +296,7 @@ void CustomWindow::fill_buffer() {
 
 
 // shows save menu
-void CustomWindow::show_save(Gtk::Window &parent_window, const std::string &content) {
+void CustomWindow::show_save(Gtk::Window &parent_window, const std::string &content, bool is_dark) {
     m_export_content = content;
 
     auto* save_window = Gtk::make_managed<Gtk::Window>();
@@ -283,6 +305,10 @@ void CustomWindow::show_save(Gtk::Window &parent_window, const std::string &cont
     save_window->set_resizable(true);
     save_window->set_transient_for(parent_window);
     save_window->set_modal(true);
+    save_window->add_css_class("save-window");
+    if (is_dark) {
+        save_window->add_css_class("dark"); 
+    }
 
     auto* master_box = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
     master_box->set_margin(25); 
@@ -428,7 +454,7 @@ void CustomWindow::show_file_types(Gtk::Button& parent_button) {
     popover_box->set_margin(5);
 
     auto* btn_pdf = Gtk::make_managed<Gtk::Button>("PDF");
-    auto* btn_png = Gtk::make_managed<Gtk::Button>("PNG");
+    auto* btn_csv = Gtk::make_managed<Gtk::Button>("CSV");
     auto* btn_txt = Gtk::make_managed<Gtk::Button>("TXT");
 
     btn_pdf->signal_clicked().connect([this]() {
@@ -437,9 +463,9 @@ void CustomWindow::show_file_types(Gtk::Button& parent_button) {
         if (this->m_file_type_popover) this->m_file_type_popover->popdown(); 
     });
 
-    btn_png->signal_clicked().connect([this]() {
-        this->m_selected_format = "png";
-        std::cout << "Format set to: PNG" << std::endl;
+    btn_csv->signal_clicked().connect([this]() {
+        this->m_selected_format = "csv";
+        std::cout << "Format set to: csv" << std::endl;
         if (this->m_file_type_popover) this->m_file_type_popover->popdown();
     });
 
@@ -450,21 +476,27 @@ void CustomWindow::show_file_types(Gtk::Button& parent_button) {
     });
 
     popover_box->append(*btn_pdf);
-    popover_box->append(*btn_png);
+    popover_box->append(*btn_csv);
     popover_box->append(*btn_txt);
 
     m_file_type_popover->set_child(*popover_box);
     m_file_type_popover->popup();
 }
 
-// wip, but general settings menu
-void CustomWindow::show_settings(Gtk::Window& parent_window) {
+void CustomWindow::show_settings(Gtk::Window& parent_window, std::function<void(bool)> on_theme_changed, bool is_dark) {
+
+    m_on_theme_changed = on_theme_changed;
+
     auto* settings_window = Gtk::make_managed<Gtk::Window>();
     settings_window->set_title("Settings");
     settings_window->set_default_size(900, 700);
     settings_window->set_resizable(true);
     settings_window->set_transient_for(parent_window);
     settings_window->set_modal(true);
+    settings_window->add_css_class("settings-window");
+    if (is_dark) {
+        settings_window->add_css_class("dark"); 
+    }
 
     auto* master_window = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL);
     master_window->set_margin(15);
@@ -532,17 +564,22 @@ void CustomWindow::show_settings(Gtk::Window& parent_window) {
     settings_window->set_child(*master_window);
     settings_window->present();
 
-
-    // path for sigdb.txt being a choice
-
 }
 
 void CustomWindow::light_mode() {
     Gtk::Settings::get_default()->property_gtk_application_prefer_dark_theme() = false;
+
+    if (m_on_theme_changed) {
+        m_on_theme_changed(false);
+    }
 }
 
 void CustomWindow::dark_mode() {
     Gtk::Settings::get_default()->property_gtk_application_prefer_dark_theme() = true;
+
+    if (m_on_theme_changed) {
+        m_on_theme_changed(true);
+    }
 }
 
 void CustomWindow::on_file_dialog_finish(const Glib::RefPtr<Gio::AsyncResult>& result, const Glib::RefPtr<Gtk::FileDialog>& dialog) {
@@ -561,9 +598,22 @@ void CustomWindow::on_file_dialog_finish(const Glib::RefPtr<Gio::AsyncResult>& r
     }
 }
 
-// settings, light and dark mode
+void CustomWindow::on_directory_dialog_finish(const Glib::RefPtr<Gio::AsyncResult>& result, const Glib::RefPtr<Gtk::FileDialog>& dialog) {
 
-// maybe a function (for each) that does all of the set, append, etc
-// maybe make a central function, that returns window, and in the function it does all the necessary setups like title, 
-// resizable, etc
+    try {
+        auto directory = dialog->select_folder_finish(result);
+        std::string directory_name = directory->get_path();
+
+        std::cout << "CustomWindow successfully caught file path: " << directory_name << std::endl;
+
+        if (m_on_directory_selected) {
+            m_on_directory_selected(directory_name);
+        }
+    } catch (const Gtk::DialogError& err) {
+        std::cout << "CustomWindow: User cancelled choice. " << err.what() << std::endl;
+    } catch (const Glib::Error& err) {
+        std::cout << "CustomWindow: Unexpected exception. " << err.what() << std::endl;
+    }
+}
+
 
